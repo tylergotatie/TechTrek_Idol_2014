@@ -1,11 +1,14 @@
-
-
-
 var mapMain;
-
+var xValues = new Array
+var yValues = new Array
+var min_x
+var min_y
+var max_x
+var max_y
 // @formatter:off
 require([
   "esri/map",
+  "esri/SpatialReference",
   "esri/graphic",
   "esri/dijit/Geocoder",
   "esri/tasks/locator",
@@ -27,7 +30,7 @@ require([
   "dijit/layout/BorderContainer",
   "dijit/layout/ContentPane"],
   function(
-    Map, Graphic, Geocoder, Locator,
+    Map, SpatialReference, Graphic, Geocoder, Locator,
     SimpleMarkerSymbol, TextSymbol, Font,
     Color, array,
     dom, on, parser, ready,
@@ -40,7 +43,8 @@ require([
 });
   // Wait until DOM is ready *and* all outstanding require() calls have been resolved
   ready(function() {
-
+    // var xValues = new Array
+    // var yValues = new Array
     var taskLocator;
 
     // Parse DOM nodes decorated with the data-dojo-type attribute
@@ -49,67 +53,22 @@ require([
     // Create the map
     mapMain = new Map("cpCenter", {
       basemap : "topo",
-      center : [-79.38, 43.65],
-      zoom : 13
+      center : [-94.46, 49.35],
+      zoom : 4,
     });
 
-
-
-
     // Locator
-
     taskLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 
 
     //  Locate button's onclick event handler
-	
-    on(dom.byId("btnLocate"), "click", makeCityList);
-	
-	// Get weather's on cclick even handler
-	
-	//on(dom.byId("btnWeather"), "click", logArrayElements);
-	// $(document).ready(function() {
-			
-				
-		// var city1 = [document.getElementById("taAddress").value]
-		// var city2 = [document.getElementById("taAddress2").value]
-		
-		// var url1 = 'http://api.openweathermap.org/data/2.5/forecast/daily?q=' + city1 +'&mode=json&units=metric&cnt=16';
-			
-			// $.getJSON(url1,function(Result1){
-				// l = Result1.list;						
-				// l.forEach(logArrayElements1);
-			// });	
-			
-		// var day1 = 0;
-				
-		// function logArrayElements1(element, index, array) {					
-			// if (index == day1) {document.getElementById("FirstdayDiv").innerHTML = "Day Temp = " + element.temp.day}
-		// }
-		
-		// var url2 = 'http://api.openweathermap.org/data/2.5/forecast/daily?q=' + city2 +'&mode=json&units=metric&cnt=16';
-			
-			// $.getJSON(url2,function(Result2){
-				// l = Result2.list;						
-				// l.forEach(logArrayElements2);
-			// });	
-			
-		// var day2 = 1;
-				
-		// function logArrayElements2(element, index, array) {					
-			// if (index == day2) {document.getElementById("SeconddayDiv").innerHTML = "Day Temp = " + element.temp.day}
-		// }
-			
-	// });
-		
+    on(dom.byId("btnLocate"), "click", makeCityList);	
 
     //  Wire the task's completion event handler
-
     taskLocator.on("address-to-locations-complete", showResults)
 
-
     function doAddressToLocations(singlePlace) {
-      console.log(singlePlace);
+      // console.log(singlePlace);
       //  Locator input parameters
       var objAddress = {
         "SingleLine" : singlePlace
@@ -162,12 +121,20 @@ require([
         }
       });
 
+
       // Center and zoom the map on the result
+
       if (geometryLocation !== undefined) {
-        mapMain.centerAndZoom(geometryLocation, 10);
+      mapMain.centerAndZoom(geometryLocation, 4);
+
+        xValues.push(geometryLocation.x)
+        yValues.push(geometryLocation.y)
+        // console.log(xValues)
+        // console.log(yValues)
+
       }
     }
-
+    
     /*
      * make a list of the cities from the Textareas
      *  and place the list results into the testing pane
@@ -183,6 +150,8 @@ require([
       createArray(cities);
 	  //console.log("FINISH");
     }
+
+
 
     function makeDateList(){
       var dates = [document.getElementById("date1").value,
@@ -209,46 +178,50 @@ require([
 		var days = (diff/86400000);
 		console.log(days); */
 		
-    }
-		
+    }		
+
     function createArray (cities) {
       // looping through the cities array
 	  var count = 1;
 	  
 	  //console.log(daydisplay)
-      for (var code = 0; code < cities.length; code++) {
-         doAddressToLocations(cities[code]);
-		 /* var daydisplay = 'Day'+ count;
-		 //creating a count to see how many location have been entered
-		 console.log(count);
-		 console.log(daydisplay);
-		 var citydiv = document.getElementById(daydisplay);
-		 var cityname = citydiv.childNodes[0];
-		 cityname.nodeValue = cities[code];
-		count+= 1; */
-        }
-		
+		for (var code = 0; code < cities.length; code++) {
+			if (cities[code] != "") {
+				console.log(code);
+				doAddressToLocations(cities[code]);
+			}
+		}
 		var dates = makeDateList();		
-		Weather(cities, dates);	
-		
-      }
+		Weather(cities, dates);
+    }
 
 
+    function extentChange (){
+      var max_x = Math.max.apply(Math, xValues);
+      console.log(max_x)
+      var max_y = Math.max.apply(Math, yValues);
+      console.log(max_y)
+      var min_x = Math.min.apply(Math, xValues);
+      console.log(min_x)
+      var min_y = Math.min.apply(Math, yValues);
+      console.log(min_y)
+      var newExtent = new esri.geometry.Extent();
+      newExtent.xmin = min_x;
+      newExtent.ymin = min_y;
+      newExtent.xmax = max_x;
+      newExtent.ymax = max_y;
+      newExtent.spatialReference = new esri.SpatialReference({wkid:4326});
+
+      mapMain.setExtent(newExtent);
+      console.log("new Extent?")
+
+    }
 
   });
 
 
 });
 
-
-
-// function RunApp() {
-  // makeCityList();
-  // makeDateList();
-  // console.log("hi");
-  // Weather();
-  
-//}
 
 	// function WeatherDate(){
 		// var d = new Date("July 18, 1983 01:15:00");
@@ -304,13 +277,13 @@ require([
 		var days = (diff / (1000*60*60*24));
 		
 		for (var c = 0; c < citiesarray.length; c++) {			
-			//console.log(c);
+			console.log(citiesarray[c]);
 			if (citiesarray[c] != "") {
 				var url = 'http://api.openweathermap.org/data/2.5/forecast/daily?q=' + citiesarray[c] +'&mode=json&units=metric&cnt=16';
 				console.log(url);	
 				$.getJSON(url,function(Result1){
 					l = Result1.list;
-					console.log(l);
+					//console.log(l);
 					l.forEach(logArrayElements1);
 				});
 			}
@@ -331,18 +304,18 @@ require([
 		//var todayDate = new Date(todayYear, todayMonth, todayDay);
 		var todayDate = todayMonth + "/" + todayDay + "/" + todayYear;
 		var todayDateFormat = new Date(todayDate)
-		console.log("TODAY" + todayDateFormat);		
+		//console.log("TODAY" + todayDateFormat);		
 		
 		//var todayDate2 = todayMonth + "/" + "14" + "/" + todayYear;
 		var todayDate2 = document.getElementById("date1").value;
 		var todayDateFormat2 = new Date(todayDate2);	
-		console.log(todayDateFormat2);
+		//console.log(todayDateFormat2);
 		
 		var diffDate = Math.abs(todayDateFormat2-todayDateFormat);		
 		var daysDate = (diffDate/86400000);
-		console.log(daysDate);
+		//console.log(daysDate);
 		
-		if (index == daysDate) { //currently pulling today's date for all cities
+		if (index == 0) { //currently pulling today's date for all cities
 			var daytemp = element.temp.day;
 			var weatherIcon = element.weather[0].icon;			
 			var weatherUrl = "images/" + weatherIcon + ".png";
@@ -389,11 +362,3 @@ require([
 			
 		}
 	}
-	
-	
-	
-		
-		
-			
-		
-	
