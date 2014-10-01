@@ -1,10 +1,11 @@
 var mapMain;
-var xValues = new Array
-var yValues = new Array
-var min_x
-var min_y
-var max_x
-var max_y
+var xValues = new Array;
+var yValues = new Array;
+var min_x;
+var min_y;
+var max_x;
+var max_y;
+var date_counter = 0;
 // @formatter:off
 require([
   "esri/map",
@@ -139,7 +140,7 @@ require([
      * make a list of the cities from the Textareas
      *  and place the list results into the testing pane
      */
-    function makeCityList(){
+    function makeCityList(){	  
       var cities = [document.getElementById("taAddress").value,
                     document.getElementById("taAddress2").value,
                     document.getElementById("taAddress3").value,
@@ -266,9 +267,22 @@ require([
 	
 	} */
 	
-	function Weather (citiesarray, datesarray) {		
-		console.log(citiesarray);
-		console.log(datesarray);
+	function Weather (citiesarray, datesarray) {
+
+		//Resets Date Counter
+		date_counter = 0;
+		
+		//Resets temp squares when locate button is clicked
+		var myNode = document.getElementById("TheWeather");
+		while (myNode.firstChild) {
+			myNode.removeChild(myNode.firstChild);
+		}
+		
+		//Remove geocoded locations
+		mapMain.graphics.clear();
+		
+	
+		
 		var a = new Date("8/1/2014");
 		var d = new Date("9/2/2014");
 		var n = d.getDate(); 
@@ -283,7 +297,7 @@ require([
 				console.log(url);	
 				$.getJSON(url,function(Result1){
 					l = Result1.list;
-					//console.log(l);
+					date_counter +=1;
 					l.forEach(logArrayElements1);
 				});
 			}
@@ -294,7 +308,8 @@ require([
 		
 
 	function logArrayElements1(element, index, array) {
-		//console.log(element);	
+		//console.log(element);
+		//console.log(date_counter);
 		
 		var todayDateObj = new Date();
 		var todayDay = todayDateObj.getDate();
@@ -304,18 +319,23 @@ require([
 		//var todayDate = new Date(todayYear, todayMonth, todayDay);
 		var todayDate = todayMonth + "/" + todayDay + "/" + todayYear;
 		var todayDateFormat = new Date(todayDate)
-		//console.log("TODAY" + todayDateFormat);		
+		console.log("TODAY" + todayDateFormat);		
 		
 		//var todayDate2 = todayMonth + "/" + "14" + "/" + todayYear;
-		var todayDate2 = document.getElementById("date1").value;
+		var date_div_id = "date" + date_counter;
+		var todayDate2 = document.getElementById(date_div_id).value;
 		var todayDateFormat2 = new Date(todayDate2);	
-		//console.log(todayDateFormat2);
+		console.log(todayDateFormat2);
 		
 		var diffDate = Math.abs(todayDateFormat2-todayDateFormat);		
 		var daysDate = (diffDate/86400000);
-		//console.log(daysDate);
 		
-		if (index == 0) { //currently pulling today's date for all cities
+		if (daysDate >= 15) {
+			daysDate = 14;
+		}
+
+		
+		if (index == daysDate) { //currently pulling today's date for all cities
 			var daytemp = element.temp.day;
 			var weatherIcon = element.weather[0].icon;			
 			var weatherUrl = "images/" + weatherIcon + ".png";
